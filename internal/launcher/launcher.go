@@ -18,6 +18,7 @@ type Options struct {
 	Command          string
 	Args             []string
 	ForceProxychains bool
+	ForceNetNS       bool
 }
 
 // Launch executes the target application wrapped in zero-leak proxy guards
@@ -27,14 +28,37 @@ func Launch(cfg *config.Config, mgr *tor.Manager, opt Options) error {
 		return fmt.Errorf("command not found in PATH: %s", opt.Command)
 	}
 
-	socksPort, httpPort, _, _ := mgr.Ports()
+	socksPort, httpPort, dnsPort, _ := mgr.Ports()
 	mode := strings.ToLower(strings.TrimSpace(cfg.UniversalAppMode))
-	useProxychains := opt.ForceProxychains || cfg.ForceProxychains || mode == "proxychains"
-	forceElectron := mode == "electron"
+	useNetNS := opt.ForceNetNS || mode == "netns"
+	useProxychains := !useNetNS && (opt.ForceProxychains || cfg.ForceProxychains || mode == "proxychains")
+	forceElectron := !useNetNS && mode == "electron"
 
 	var cmd *exec.Cmd
 
-	if useProxychains {
+	if useNetNS {
+		if os.Geteuid() != 0 {
+			return fmt.Errorf("профиль netns-gateway требует привилегий root (запустите через sudo)")
+		}
+
+		engine := leak.NewNetNSEngine(leak.NetNSConfig{
+			TorSocksPort: socksPort,
+			TorDNSPort:   dnsPort,
+		})
+
+		fmt.Printf("%s Эталонная изоляция ядра :: Zero-Forwarding, Zero-NAT, DNS-interception, nftables\n",
+			banner.TagSecure("NETNS-GATEWAY"))
+
+		if err := engine.Setup(); err != nil {
+			return fmt.Errorf("ошибка настройки NetNS шлюза: %w", err)
+		}
+		defer func() {
+			fmt.Printf("\n%s Очистка сетевого пространства имен и правил nftables...\n", banner.TagAction("NETNS-TEARDOWN"))
+			_ = engine.Teardown()
+		}()
+
+		cmd = engine.ExecCommand(targetBin, opt.Args, os.Environ())
+	} else if useProxychains {
 		proxychainsBin := cfg.ProxychainsPath
 		if proxychainsBin == "" {
 			proxychainsBin = "proxychains4"

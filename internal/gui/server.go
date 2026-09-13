@@ -301,13 +301,18 @@ func (s *Server) handleTest(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"ip":       report.IP,
-		"country":  report.Country,
-		"city":     report.City,
-		"org":      report.Org,
-		"is_tor":   report.IsTor,
-		"latency":  report.Latency.String(),
-		"error":    func() string { if report.Error != nil { return report.Error.Error() }; return "" }(),
+		"ip":      report.IP,
+		"country": report.Country,
+		"city":    report.City,
+		"org":     report.Org,
+		"is_tor":  report.IsTor,
+		"latency": report.Latency.String(),
+		"error": func() string {
+			if report.Error != nil {
+				return report.Error.Error()
+			}
+			return ""
+		}(),
 	})
 }
 

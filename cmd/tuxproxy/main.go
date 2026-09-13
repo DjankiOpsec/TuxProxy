@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"tuxproxy/internal/config"
 	"tuxproxy/internal/gui"
 	"tuxproxy/internal/launcher"
+	"tuxproxy/internal/leak"
 	"tuxproxy/internal/shell"
 	"tuxproxy/internal/tor"
 	"tuxproxy/internal/tui"
@@ -57,11 +59,7 @@ func main() {
 		handleSubshell()
 		return
 	case "open", "run":
-		if len(os.Args) < 3 {
-			fmt.Printf("%s Не указано целевое приложение. Формат: tuxproxy open <приложение> [аргументы...]\n", banner.TagErr("СИНТАКСИС"))
-			os.Exit(1)
-		}
-		handleOpen(os.Args[2], os.Args[3:], "", "", false, false, false)
+		handleOpenSubcommand(os.Args[2:])
 		return
 	case "test":
 		handleTest()
@@ -83,6 +81,11 @@ func main() {
 		return
 	}
 
+	// Автоматическая очистка сиротливых пространств имен и таблиц nftables (Reconcile / GC)
+	if os.Geteuid() == 0 {
+		_, _ = leak.ReconcileOrphans(nil)
+	}
+
 	// Флаги командной строки
 	var (
 		flagGUI         bool
@@ -92,6 +95,7 @@ func main() {
 		flagBridge      string
 		flagEphemeral   bool
 		flagProxychains bool
+		flagNetNS       bool
 		flagDaemon      bool
 		flagTest        bool
 		flagNewnym      bool
@@ -113,6 +117,8 @@ func main() {
 	fs.BoolVar(&flagEphemeral, "e", false, "Режим без сохранения на диск")
 	fs.BoolVar(&flagProxychains, "proxychains", false, "Принудительный перехват через proxychains4 (LD_PRELOAD)")
 	fs.BoolVar(&flagProxychains, "p", false, "Принудительный перехват через proxychains4")
+	fs.BoolVar(&flagNetNS, "netns", false, "Эталонная изоляция в Linux Network Namespace (требует sudo)")
+	fs.BoolVar(&flagNetNS, "n", false, "Эталонная изоляция в Linux Network Namespace")
 	fs.BoolVar(&flagDaemon, "daemon", false, "Запуск постоянной службы локального прокси")
 	fs.BoolVar(&flagDaemon, "d", false, "Запуск службы прокси")
 	fs.BoolVar(&flagTest, "test", false, "Комплексная диагностика контура и аудит на утечки IP/DNS")
@@ -162,7 +168,7 @@ func main() {
 		}
 		app := cmdParts[0]
 		extraArgs := append(cmdParts[1:], tailArgs...)
-		handleOpen(app, extraArgs, flagCountry, flagBridge, flagEphemeral, flagProxychains, false)
+		handleOpen(app, extraArgs, flagCountry, flagBridge, flagEphemeral, flagProxychains, flagNetNS, false)
 		return
 	}
 
@@ -245,7 +251,44 @@ func handleSettings() {
 	}
 }
 
-func handleOpen(app string, args []string, countryOverride, bridgeOverride string, ephemeral, forceProxychains, daemon bool) {
+func handleOpenSubcommand(args []string) {
+	if len(args) == 0 {
+		fmt.Printf("%s Не указано целевое приложение. Формат: tuxproxy open [опции] <приложение> [аргументы...]\n", banner.TagErr("СИНТАКСИС"))
+		os.Exit(1)
+	}
+
+	fs := flag.NewFlagSet("open", flag.ExitOnError)
+	var (
+		country     string
+		bridge      string
+		ephemeral   bool
+		proxychains bool
+		netns       bool
+	)
+
+	fs.StringVar(&country, "country", "", "Страна выхода (ISO-код: us, de, nl...)")
+	fs.StringVar(&country, "c", "", "Страна выхода")
+	fs.StringVar(&bridge, "bridge", "", "Мост обхода DPI (snowflake, obfs4...)")
+	fs.StringVar(&bridge, "b", "", "Мост обхода DPI")
+	fs.BoolVar(&ephemeral, "ephemeral", false, "Работа только в RAM")
+	fs.BoolVar(&ephemeral, "e", false, "Работа только в RAM")
+	fs.BoolVar(&proxychains, "proxychains", false, "Перехват через proxychains4 (LD_PRELOAD)")
+	fs.BoolVar(&proxychains, "p", false, "Перехват через proxychains4")
+	fs.BoolVar(&netns, "netns", false, "Эталонная изоляция Network Namespace (требует sudo)")
+	fs.BoolVar(&netns, "n", false, "Эталонная изоляция Network Namespace")
+
+	_ = fs.Parse(args)
+	remaining := fs.Args()
+
+	if len(remaining) == 0 {
+		fmt.Printf("%s Не указано целевое приложение. Формат: tuxproxy open [опции] <приложение> [аргументы...]\n", banner.TagErr("СИНТАКСИС"))
+		os.Exit(1)
+	}
+
+	handleOpen(remaining[0], remaining[1:], country, bridge, ephemeral, proxychains, netns, false)
+}
+
+func handleOpen(app string, args []string, countryOverride, bridgeOverride string, ephemeral, forceProxychains, forceNetNS, daemon bool) {
 	banner.PrintBanner()
 
 	cfg, err := config.Load()
@@ -303,6 +346,14 @@ func handleOpen(app string, args []string, countryOverride, bridgeOverride strin
 		os.Exit(1)
 	}
 
+	// Активация 0ms событийного Watchdog
+	mgr.StartWatchdog(context.Background(), func(err error) {
+		fmt.Printf("\n\n%s Аварийный сигнал Tor Supervisor: %v\n", banner.TagErr("WATCHDOG"), err)
+		fmt.Printf("%s Активация Fail-Closed: мгновенная остановка процесса...\n", banner.TagWarn("KILL-SWITCH"))
+		_ = mgr.Stop()
+		os.Exit(1)
+	})
+
 	socksPort, httpPort, dnsPort, controlPort := mgr.Ports()
 	fmt.Printf("%s Анонимный контур Tor успешно построен.\n", banner.TagOK("КОНТУР"))
 
@@ -333,6 +384,11 @@ func handleOpen(app string, args []string, countryOverride, bridgeOverride strin
 			banner.BrightGreen+"ЗАБЛОКИРОВАНО"+banner.Reset),
 	}
 
+	if forceNetNS || cfg.UniversalAppMode == "netns" {
+		statusLines = append(statusLines, fmt.Sprintf("Профиль изоляции:      %s (Zero-Forwarding, Zero-NAT, nftables, lo UP)",
+			banner.BrightGreen+"NETNS-GATEWAY"+banner.Reset))
+	}
+
 	fmt.Print(banner.BoxSection("АКТИВНАЯ СРЕДА БЕЗОПАСНОСТИ TUXPROXY", statusLines))
 
 	// Запуск целевого приложения
@@ -340,6 +396,7 @@ func handleOpen(app string, args []string, countryOverride, bridgeOverride strin
 		Command:          app,
 		Args:             args,
 		ForceProxychains: forceProxychains || cfg.ForceProxychains,
+		ForceNetNS:       forceNetNS,
 	}
 
 	launchErr := launcher.Launch(cfg, mgr, opt)
@@ -640,4 +697,3 @@ func handleSubshell() {
 		fmt.Printf("%s Завершение сеанса: %v\n", banner.TagWarn("СЕССИЯ"), err)
 	}
 }
-

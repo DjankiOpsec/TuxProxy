@@ -10,35 +10,35 @@ import (
 // Config представляет расширенную схему настроек TuxProxy
 type Config struct {
 	// Маршрутизация и Геолокация
-	ExitCountry       string   `json:"exit_country"`        // Двухбуквенный ISO-код страны выхода (или "any")
-	StrictNodes       bool     `json:"strict_nodes"`        // Строгая привязка: разрыв при отсутствии целевых релеев
-	ExcludeNodes      string   `json:"exclude_nodes"`       // Исключаемые страны/узлы, например "{ru},{by}"
-	NumEntryGuards    int      `json:"num_entry_guards"`    // Число входных узлов (по умолчанию 1)
+	ExitCountry    string `json:"exit_country"`     // Двухбуквенный ISO-код страны выхода (или "any")
+	StrictNodes    bool   `json:"strict_nodes"`     // Строгая привязка: разрыв при отсутствии целевых релеев
+	ExcludeNodes   string `json:"exclude_nodes"`    // Исключаемые страны/узлы, например "{ru},{by}"
+	NumEntryGuards int    `json:"num_entry_guards"` // Число входных узлов (по умолчанию 1)
 
 	// Обход блокировок (Pluggable Transports)
-	BridgeType        string   `json:"bridge_type"`         // "none", "snowflake", "obfs4", "webtunnel", "custom"
-	CustomBridges     []string `json:"custom_bridges"`      // Пользовательские строки мостов
-	SnowflakeURL      string   `json:"snowflake_url"`       // URL сигнального брокера Snowflake
-	SnowflakeFront    string   `json:"snowflake_front"`     // Домен фронтинга (например www.google.com)
-	SnowflakeAMPCache string   `json:"snowflake_ampcache"`  // URL проксирования через Google AMP Cache
+	BridgeType        string   `json:"bridge_type"`        // "none", "snowflake", "obfs4", "webtunnel", "custom"
+	CustomBridges     []string `json:"custom_bridges"`     // Пользовательские строки мостов
+	SnowflakeURL      string   `json:"snowflake_url"`      // URL сигнального брокера Snowflake
+	SnowflakeFront    string   `json:"snowflake_front"`    // Домен фронтинга (например www.google.com)
+	SnowflakeAMPCache string   `json:"snowflake_ampcache"` // URL проксирования через Google AMP Cache
 
 	// Сетевые слушатели (Порты)
-	SocksPort         int      `json:"socks_port"`          // Локальный SOCKS5h порт (по умолчанию 9050)
-	HTTPPort          int      `json:"http_port"`           // Локальный HTTP CONNECT порт (по умолчанию 9080)
-	DNSPort           int      `json:"dns_port"`            // Локальный DNS-резолвер Tor (по умолчанию 9053)
-	ControlPort       int      `json:"control_port"`        // Порт управления Tor ControlPort (по умолчанию 9051)
+	SocksPort   int `json:"socks_port"`   // Локальный SOCKS5h порт (по умолчанию 9050)
+	HTTPPort    int `json:"http_port"`    // Локальный HTTP CONNECT порт (по умолчанию 9080)
+	DNSPort     int `json:"dns_port"`     // Локальный DNS-резолвер Tor (по умолчанию 9053)
+	ControlPort int `json:"control_port"` // Порт управления Tor ControlPort (по умолчанию 9051)
 
 	// Безопасность и предотвращение утечек (Zero-Leak OPSEC)
-	DisableIPv6       bool     `json:"disable_ipv6"`        // Отключение dual-stack IPv6 (ClientUseIPv6 0)
-	SafeLogging       bool     `json:"safe_logging"`        // Очистка IP-адресов в служебных логах Tor
-	PreventWebRTCLeak bool     `json:"prevent_webrtc_leak"` // Подавление не-проксированного WebRTC UDP трафика
-	PreventDNSLeak    bool     `json:"prevent_dns_leak"`    // Блокировка локального DNS через socks5h и host-resolver-rules
-	ForceProxychains  bool     `json:"force_proxychains"`   // Принудительный перехват всех процессов через proxychains4
-	Ephemeral         bool     `json:"ephemeral"`           // Работа исключительно в RAM/tmpfs (без следов на диске)
+	DisableIPv6       bool `json:"disable_ipv6"`        // Отключение dual-stack IPv6 (ClientUseIPv6 0)
+	SafeLogging       bool `json:"safe_logging"`        // Очистка IP-адресов в служебных логах Tor
+	PreventWebRTCLeak bool `json:"prevent_webrtc_leak"` // Подавление не-проксированного WebRTC UDP трафика
+	PreventDNSLeak    bool `json:"prevent_dns_leak"`    // Блокировка локального DNS через socks5h и host-resolver-rules
+	ForceProxychains  bool `json:"force_proxychains"`   // Принудительный перехват всех процессов через proxychains4
+	Ephemeral         bool `json:"ephemeral"`           // Работа исключительно в RAM/tmpfs (без следов на диске)
 
 	// Универсальная изоляция приложений
-	UniversalAppMode  string   `json:"universal_app_mode"`  // "auto", "proxychains", "env", "electron"
-	JavaProxySupport  bool     `json:"java_proxy_support"`  // Автоматическая инжекция _JAVA_OPTIONS для IntelliJ/Java
+	UniversalAppMode string `json:"universal_app_mode"` // "auto", "proxychains", "env", "electron"
+	JavaProxySupport bool   `json:"java_proxy_support"` // Автоматическая инжекция _JAVA_OPTIONS для IntelliJ/Java
 
 	// Интеграция с терминалом (Shell Hook)
 	TerminalAutoHook        bool   `json:"terminal_auto_hook"`         // Автоподключение к каждой сессии терминала

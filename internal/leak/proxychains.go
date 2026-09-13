@@ -30,4 +30,3 @@ socks5 127.0.0.1 %d
 	}
 	return tmpFile.Name(), nil
 }
-

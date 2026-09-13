@@ -1,5 +1,8 @@
 # Binaries
 /tuxproxy
+/bin/
+/dist/
+/test/synthetic/tux-leaker
 
 # Runtime and temp files
 *.tmp

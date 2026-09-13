@@ -15,13 +15,13 @@ import (
 
 // EgressReport summarizes verified public network identity
 type EgressReport struct {
-	IP        string        `json:"ip"`
-	Country   string        `json:"country"`
-	City      string        `json:"city"`
-	Org       string        `json:"org"`
-	IsTor     bool          `json:"is_tor"`
-	Latency   time.Duration `json:"latency"`
-	Error     error         `json:"error,omitempty"`
+	IP      string        `json:"ip"`
+	Country string        `json:"country"`
+	City    string        `json:"city"`
+	Org     string        `json:"org"`
+	IsTor   bool          `json:"is_tor"`
+	Latency time.Duration `json:"latency"`
+	Error   error         `json:"error,omitempty"`
 }
 
 type torCheckResponse struct {
