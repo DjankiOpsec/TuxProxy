@@ -1,28 +1,22 @@
-# TUXPROXY :: ИЗОЛЯЦИЯ ПРОЦЕССОВ И СЕТЕВОЕ ТУННЕЛИРОВАНИЕ ДЛЯ LINUX
+# TuxProxy: Linux Process Isolation & Network Namespace Gateway
 
 <p align="center">
-  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Language-Go%201.22+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go"></a>
-  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Platform Linux"></a>
-  <a href="https://github.com/kondrakov408-sys/TuxProxy/blob/main/SECURITY.md"><img src="https://img.shields.io/badge/Security-Fail--Closed%20OPSEC-brightgreen?style=for-the-badge&logo=shield" alt="OPSEC"></a>
-  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Network-Tor%20Isolated-7D4698?style=for-the-badge&logo=torproject&logoColor=white" alt="Tor Network"></a>
-  <a href="https://github.com/kondrakov408-sys/TuxProxy/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License"></a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/github/languages/top/kondrakov408-sys/TuxProxy?style=flat-square&color=00ADD8" alt="Top Language">
-  <img src="https://img.shields.io/github/repo-size/kondrakov408-sys/TuxProxy?style=flat-square&color=informational" alt="Repo Size">
-  <img src="https://img.shields.io/github/stars/kondrakov408-sys/TuxProxy?style=flat-square&color=yellow" alt="Stars">
-  <img src="https://img.shields.io/github/issues/kondrakov408-sys/TuxProxy?style=flat-square&color=orange" alt="Issues">
+  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Language-Go%201.22+-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go"></a>
+  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Platform Linux"></a>
+  <a href="https://github.com/kondrakov408-sys/TuxProxy/blob/main/SECURITY.md"><img src="https://img.shields.io/badge/Security-Fail--Closed%20OPSEC-brightgreen?style=flat-square" alt="OPSEC"></a>
+  <a href="https://github.com/kondrakov408-sys/TuxProxy"><img src="https://img.shields.io/badge/Isolation-NetNS%20%2B%20nftables-purple?style=flat-square" alt="Isolation"></a>
+  <a href="https://github.com/kondrakov408-sys/TuxProxy/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License"></a>
 </p>
 
 ```text
 ========================================================================
- TUXPROXY :: Комплекс сетевой изоляции процессов Linux v1.0.0
- Архитектура NetNS-Gateway | Маршрутизация Tor | Пакетный фильтр nftables
+ TUXPROXY :: Linux Process Isolation & Network Namespace Gateway
+ NetNS-Gateway Architecture | Tor Supervisor | nftables Packet Filter
 ========================================================================
 ```
 
-**TuxProxy** — системная утилита на языке Go для операционных систем семейства Linux, предназначенная для маршрутизации трафика прикладных программ и сессий терминала через изолированный контур Tor с защитой от утечек данных, поддержкой Pluggable Transports (Snowflake, obfs4, WebTunnel), контролем юрисдикций выхода (Exit Nodes) и ядерной изоляцией сетевого стека (`netns-gateway`).
+**TuxProxy** — системный комплекс на языке Go для Linux, предназначенный для полной изоляции трафика прикладных программ и терминальных сессий в выделенном сетевом пространстве имен (`netns-gateway`) с транзакционной фильтрацией `nftables`, Unix ControlSocket управлением Tor и гарантированной защитой от утечек трафика (fail-closed).
+
 
 ---
 
